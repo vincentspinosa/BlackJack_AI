@@ -1,5 +1,3 @@
-If you find this solver useful, please consider making a donation at the BTC address bc1q9wk89alk8dy50z04p6q6q95pkdm46trzrrnzfk
-
 **Overview**
 
 This is a powerful, browser-based tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains the card count, and provides real-time, optimal strategy recommendations.
