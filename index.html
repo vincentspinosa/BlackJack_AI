@@ -103,6 +103,8 @@
         #recommendation-text { font-size: 1.5em; font-weight: bold; }
         #insurance-recommendation { font-size: 0.9em; }
         .player-status { font-weight: bold; font-size: 1.1em; color: #f1c40f; }
+        #cancel-action-btn { background-color: #8e44ad; }
+        #cancel-action-btn:hover { background-color: #a569bd; }
     </style>
 </head>
 <body>
@@ -195,6 +197,9 @@
              <div id="input-controls">
                 <h3>Deal a Card (Click to select)</h3>
                 <div id="card-picker-grid"></div>
+            </div>
+            <div>
+                <button id="cancel-action-btn" disabled>Cancel Previous Action</button>
             </div>
         </div>
     </div>
@@ -382,6 +387,7 @@
             const playersArea = document.getElementById('players-area');
             const startGameBtn = document.getElementById('start-game-btn');
             const nextHandBtn = document.getElementById('next-hand-btn');
+            const cancelActionBtn = document.getElementById('cancel-action-btn');
             const userActionButtons = document.querySelectorAll('.action-btn');
             const insurancePrompt = document.getElementById('insurance-prompt');
             const insuranceRecommendation = document.getElementById('insurance-recommendation');
@@ -395,6 +401,7 @@
             let players = [], dealer = new Player('Dealer'), counter, gameState = 'SETUP';
             let currentPlayerIndex = 0, currentHandIndex = 0, dealingQueue = [];
             let gameRules = {};
+            let previousStateStack = [];
             
             // --- Setup Screen Logic ---
             function updateBankrollSetupUI() {
@@ -431,6 +438,12 @@
             startGameBtn.addEventListener('click', initializeGame);
             nextHandBtn.addEventListener('click', startNewHand);
             userActionButtons.forEach(button => button.addEventListener('click', e => handleActionButtonClick(e.target.dataset.move)));
+            cancelActionBtn.addEventListener('click', () => {
+                if (previousStateStack.length === 0) return;
+                const snapshot = previousStateStack.pop();
+                restoreGameSnapshot(snapshot);
+                cancelActionBtn.disabled = previousStateStack.length === 0;
+            });
             
             playersArea.addEventListener('click', (event) => {
                 if (event.target.classList.contains('add-player-btn')) {
@@ -441,6 +454,7 @@
                     const index = parseInt(event.target.dataset.playerIndex, 10);
                     const inputEl = playersArea.querySelector(`.bankroll-input[data-player-index="${index}"]`);
                     if (players[index] && inputEl) {
+                        savePreviousState();
                         const newBankroll = parseInt(inputEl.value, 10);
                         if (!isNaN(newBankroll) && newBankroll >= 0) {
                             players[index].bankroll = newBankroll;
@@ -450,7 +464,96 @@
                 }
             });
 
+            function savePreviousState() {
+                previousStateStack.push(getGameSnapshot());
+                cancelActionBtn.disabled = previousStateStack.length === 0;
+            }
+
+            function getGameSnapshot() {
+                return {
+                    gameState,
+                    currentPlayerIndex,
+                    currentHandIndex,
+                    dealingQueue: dealingQueue.map(item => ({ ...item })),
+                    gameRules: { ...gameRules },
+                    counter: counter ? {
+                        numDecks: counter.numDecks,
+                        runningCount: counter.runningCount,
+                        cardsSeen: counter.cardsSeen,
+                    } : null,
+                    players: players.map(player => player ? serializePlayer(player) : null),
+                    dealer: dealer ? serializePlayer(dealer) : null,
+                    ui: {
+                        recommendationText: recommendationText.textContent,
+                        currentActionText: currentActionText.textContent,
+                        insurancePromptDisplay: insurancePrompt.style.display,
+                        insuranceRecommendation: insuranceRecommendation.textContent,
+                        nextHandBtnDisplay: nextHandBtn.style.display,
+                        setupScreenDisplay: setupScreen.style.display,
+                        gameScreenDisplay: gameScreen.style.display,
+                    },
+                };
+            }
+
+            function restoreGameSnapshot(snapshot) {
+                gameState = snapshot.gameState;
+                currentPlayerIndex = snapshot.currentPlayerIndex;
+                currentHandIndex = snapshot.currentHandIndex;
+                dealingQueue = snapshot.dealingQueue.map(item => ({ ...item }));
+                gameRules = { ...snapshot.gameRules };
+
+                if (snapshot.counter) {
+                    counter = new HiLoCounter(snapshot.counter.numDecks);
+                    counter.runningCount = snapshot.counter.runningCount;
+                    counter.cardsSeen = snapshot.counter.cardsSeen;
+                } else {
+                    counter = null;
+                }
+
+                players = snapshot.players.map(player => player ? restorePlayer(player) : null);
+                dealer = snapshot.dealer ? restorePlayer(snapshot.dealer) : new Player('Dealer');
+
+                recommendationText.textContent = snapshot.ui.recommendationText;
+                currentActionText.textContent = snapshot.ui.currentActionText;
+                insurancePrompt.style.display = snapshot.ui.insurancePromptDisplay;
+                insuranceRecommendation.textContent = snapshot.ui.insuranceRecommendation;
+                nextHandBtn.style.display = snapshot.ui.nextHandBtnDisplay;
+                setupScreen.style.display = snapshot.ui.setupScreenDisplay;
+                gameScreen.style.display = snapshot.ui.gameScreenDisplay;
+
+                createPlayerUI();
+                updateUI();
+            }
+
+            function serializePlayer(player) {
+                return {
+                    id: player.id,
+                    bankroll: player.bankroll,
+                    hands: player.hands.map(hand => ({
+                        cards: hand.cards.map(card => ({ rank: card.rank, suit: card.suit })),
+                        status: hand.status,
+                    })),
+                    bets: [...player.bets],
+                    status: player.status,
+                };
+            }
+
+            function restorePlayer(data) {
+                const player = new Player(data.id, data.bankroll);
+                player.bankroll = data.bankroll;
+                player.hands = data.hands.map(handData => {
+                    const hand = new Hand();
+                    hand.cards = handData.cards.map(card => new Card(card.suit, card.rank));
+                    hand.status = handData.status;
+                    return hand;
+                });
+                player.bets = [...data.bets];
+                player.status = data.status;
+                return player;
+            }
+
             function addNewPlayer(seatIndex) {
+                savePreviousState();
                 // Find the first individual bankroll input to get a default value
                 const defaultBankrollEl = document.getElementById('initial-bankroll-0') || document.getElementById('initial-bankroll');
                 const initialBankroll = defaultBankrollEl ? (parseInt(defaultBankrollEl.value, 10) || 1000) : 1000;
@@ -476,6 +579,7 @@
                 if (!playerToRemove) return;
                 if (gameState !== 'BETTING' && gameState !== 'SETTLEMENT') return;
 
+                savePreviousState();
                 const betAmount = playerToRemove.bets.reduce((sum, bet) => sum + bet, 0);
                 playerToRemove.bankroll += betAmount;
                 players[seatIndex] = null;
@@ -552,6 +656,7 @@
             }
 
             function handleCardPickerClick(rank) {
+                savePreviousState();
                 if (gameState === 'BETTING') {
                     gameState = 'DEALING';
                 }
@@ -583,6 +688,7 @@
                 const hand = player.hands[currentHandIndex];
                 if (!hand) return;
                 
+                savePreviousState();
                 switch (move) {
                     case 'HIT':
                         currentActionText.textContent = `Player hits on Hand ${currentHandIndex + 1}. Select dealt card.`;
@@ -608,6 +714,7 @@
             }
 
             function startNewHand() {
+                savePreviousState();
                 gameState = 'BETTING';
                 nextHandBtn.style.display = 'none'; insurancePrompt.style.display = 'none';
                 players.forEach(p => { if (p) p.reset(); });
