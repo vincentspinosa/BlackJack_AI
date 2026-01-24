@@ -1253,11 +1253,18 @@
             }
             
             function advanceTurn() {
-                const player = players[currentPlayerIndex];
-                if (!player) { 
-                    startDealerTurn(); 
-                    return; 
+                // If the current seat is empty (null/undefined), skip forward to the next occupied seat.
+                // An empty seat should never be treated as "all players finished".
+                while (currentPlayerIndex < players.length && !players[currentPlayerIndex]) {
+                    currentPlayerIndex++;
+                    currentHandIndex = 0;
                 }
+                if (currentPlayerIndex >= players.length) {
+                    startDealerTurn();
+                    return;
+                }
+
+                const player = players[currentPlayerIndex];
 
                 const nextActiveHandIndex = player.hands.findIndex(hand => hand.status === 'active');
 
