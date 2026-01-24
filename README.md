@@ -1,4 +1,4 @@
-Enjoying our software? Please consider helping us with a donation.
+Enjoying our software? Please consider supporting us with a donation.
 BTC address: bc1qgp6t9d9rfrfch0qhlzwsh6ppg9gaqtxpv3pvuz
 
 **Overview**
