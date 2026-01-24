@@ -3,32 +3,33 @@ BTC address: bc1qgp6t9d9rfrfch0qhlzwsh6ppg9gaqtxpv3pvuz
 
 **Overview**
 
-This is a powerful, browser-based AI tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains the card count, and provides real-time, optimal strategy recommendations.
+This is a powerful, browser-based AI tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains a full shoe state, and provides real-time, optimal strategy recommendations.
 
-The tool combines perfect Basic Strategy with the Hi-Lo Card Counting system to give you the same edge a professional card counter would have..
+The tool combines Basic Strategy, Hi-Lo counting, and Monte Carlo EV simulation using the current shoe composition to recommend the highest-EV play for the exact game rules you selected.
 
 This entire application runs in a single HTML file and requires no installation or internet connection.
 
 **Key Features**
 
-Real-Time AI Recommendations: Get instant advice on whether to Hit, Stand, Double, Split, or Surrender.
+Real-Time AI Recommendations: Get instant advice on whether to Hit, Stand, Double, Split, or Surrender, plus the EV of each legal option.
 
-Card Counting: Automatically tracks the Running Count and calculates the True Count based on deck penetration.
+Shoe-Aware Card Counting: Tracks Running Count, True Count, cards remaining, and penetration from a real shoe model.
 
-Strategic Bet Sizing: Recommends optimal bet sizes based on the current True Count.
+Strategic Bet Sizing: Recommends bet sizing using a stepped ramp based on True Count and bankroll caps.
 
-Full Game Rule Customization: Set the number of decks, dealer rules (S17/H17), surrender options, and more to match the exact game you're playing.
+Full Game Rule Customization: Set decks, S17/H17, surrender type, DAS, resplit aces, hit split aces, and blackjack payout.
 
 Flexible Multi-Hand & Split Handling: Accurately handles complex scenarios, allowing you to split multiple times and play your hands in any order you choose.
 
-Insurance Guidance: When the dealer shows an Ace, the application will display a clear on-screen message advising whether or not to take insurance based on the current true count.
+Insurance Guidance: When the dealer shows an Ace, the application uses the remaining shoe composition to advise insurance.
+
 Cancel Previous Action: Undo one or more recent actions using the Cancel Previous Action button below the card picker.
 
 Dynamic Player Seats: Simulate a real table experience. If a player's bankroll is depleted after a hand, or if he leaves the table between two hands, their seat will become empty. A new player can then join the game by being added to that open spot before the next hand begins.
 
-Manual Card Input: You are in complete control. You tell the program which cards are dealt, making it a perfect tool for practicing with a real deck.
+Manual Card Input: You are in complete control. You tell the program which cards are dealt, making it a perfect tool for practicing with a real deck and verifying EV choices.
 
-Zero Installation: Simply download the .html file and open it in any modern web browser.
+Zero Installation: Simply download the .html file and open it in any modern web browser (double-click on it or right-click -> open with).
 
 **How to Use**
 
@@ -46,13 +47,23 @@ You will be greeted with the "Game Setup" screen. Configure the options to match
 
 Number of Players (1-7): Set how many player spots are at the table.
 
-Number of Decks (1-8): Crucial for accurate True Count calculation.
+Number of Decks (1-8): Crucial for accurate True Count calculation and shoe modeling.
 
 Initial Bankroll / Min & Max Bet: Set your session's financial parameters.
 
-Allow Surrender: Check this if the casino allows you to surrender your hand.
+Surrender Type: Choose None, Late, or Early surrender.
 
 Dealer on Soft 17: Select whether the dealer Stands (S17) or Hits (H17) on a soft 17. This is a critical rule that affects strategy.
+
+Double After Split (DAS): Toggle if doubling after a split is allowed.
+
+Resplit Aces / Hit Split Aces: Configure split rules for aces.
+
+Blackjack Payout: Set 3:2 or 6:5 to match your table.
+
+Cut Card Penetration: Shuffle point as a percentage of the shoe.
+
+AI Simulation Samples: Controls Monte Carlo sample size (higher = more accurate, slower).
 
 Click Start Game when you are ready.
 
@@ -74,7 +85,7 @@ Continue this process until all initial cards have been dealt.
 
 Once the deal is complete, the turn will move to the first player.
 
-The AI Recommendation in the middle column will display the mathematically correct move (e.g., AI recommends: HIT).
+The AI Recommendation in the middle column will display the highest-EV move (e.g., AI recommends: HIT) and a list of EVs for each legal action.
 
 Click the corresponding action button in the "User Actions" panel (e.g., Hit, Stand, Double).
 
