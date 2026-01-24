@@ -77,6 +77,28 @@
         .update-bankroll-btn { padding: 4px 8px; font-size: 0.8em; background-color: #3498db; }
         .update-bankroll-btn:hover { background-color: #5dade2; }
 
+        /* --- SETUP: SEATS TAKEN --- */
+        #seats-taken-details {
+            width: 100%;
+        }
+        #seats-taken-details > summary {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #seats-taken-options {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .seat-taken-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        /* --- END SETUP: SEATS TAKEN --- */
+
         /* Card Styles */
         .card { display: inline-block; width: 40px; height: 60px; line-height: 60px; text-align: center; padding: 10px; border: 1px solid #f0f0f0; border-radius: 6px; margin: 4px; font-weight: bold; background-color: #fff; color: #1e2d2b; font-size: 1.2em; }
         .player-hands-container { display: flex; flex-wrap: wrap; gap: 15px; }
@@ -115,6 +137,12 @@
         <div class="setup-option">
             <label for="num-players">Number of Player Spots (1-7):</label>
             <input type="number" id="num-players" min="1" max="7" value="1">
+        </div>
+        <div class="setup-option">
+            <details id="seats-taken-details">
+                <summary>Seats Taken</summary>
+                <div id="seats-taken-options"></div>
+            </details>
         </div>
         <div class="setup-option">
             <label for="num-decks">Number of Decks (1-8):</label>
@@ -786,6 +814,7 @@
             // Setup Screen Controls
             const numPlayersInput = document.getElementById('num-players');
             const bankrollTypeRadios = document.querySelectorAll('input[name="bankroll-type"]');
+            const seatsTakenOptionsEl = document.getElementById('seats-taken-options');
 
             let players = [], dealer = new Player('Dealer'), counter, shoe, gameState = 'SETUP';
             let currentPlayerIndex = 0, currentHandIndex = 0, dealingQueue = [];
@@ -793,36 +822,146 @@
             let previousStateStack = [];
             
             // --- Setup Screen Logic ---
+            function getSeatsTakenState() {
+                const checkedValues = Array.from(document.querySelectorAll('input[name="seats-taken"]:checked'))
+                    .map(el => el.value);
+                const allChecked = checkedValues.includes('all');
+                const seatIndexes = checkedValues
+                    .filter(v => v !== 'all')
+                    .map(v => parseInt(v, 10))
+                    .filter(v => !isNaN(v));
+                return { allChecked, seatIndexes };
+            }
+
+            function getTakenSeatIndexes() {
+                const numSeats = parseInt(numPlayersInput.value, 10) || 1;
+                const { allChecked, seatIndexes } = getSeatsTakenState();
+                if (allChecked) return Array.from({ length: numSeats }, (_, i) => i);
+
+                const validSeatIndexes = seatIndexes.filter(i => i >= 0 && i < numSeats);
+                if (validSeatIndexes.length === 0) {
+                    // Safety fallback: if nothing is selected, treat as "All"
+                    return Array.from({ length: numSeats }, (_, i) => i);
+                }
+                return validSeatIndexes;
+            }
+
+            function enforceSeatsTakenConstraints() {
+                const allInput = document.querySelector('input[name="seats-taken"][value="all"]');
+                const seatInputs = Array.from(document.querySelectorAll('input[name="seats-taken"]'))
+                    .filter(el => el.value !== 'all');
+
+                if (!allInput) return;
+
+                // Keep it simple and clickable:
+                // - If "All" is checked, clear specific seats (but do NOT disable them).
+                // - If any specific seat is checked, uncheck "All".
+                // - Ensure at least one option is selected (fallback to "All" if none).
+                if (allInput.checked) {
+                    seatInputs.forEach(el => { el.checked = false; });
+                    return;
+                }
+
+                const anySeatChecked = seatInputs.some(el => el.checked);
+                if (anySeatChecked) {
+                    allInput.checked = false;
+                    return;
+                }
+
+                // Must be either All, or at least one specific seat.
+                allInput.checked = true;
+                seatInputs.forEach(el => { el.checked = false; });
+            }
+
+            function updateSeatsTakenOptions() {
+                const numSeats = parseInt(numPlayersInput.value, 10) || 1;
+                const prevState = getSeatsTakenState();
+                const prevSeatSet = new Set(prevState.seatIndexes);
+                const shouldDefaultToAll = prevState.allChecked || prevState.seatIndexes.length === 0;
+
+                seatsTakenOptionsEl.innerHTML = '';
+
+                const addOption = (value, labelText, isChecked) => {
+                    const optionLabel = document.createElement('label');
+                    optionLabel.className = 'seat-taken-option';
+
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.name = 'seats-taken';
+                    input.value = value;
+                    input.checked = isChecked;
+
+                    const text = document.createElement('span');
+                    text.textContent = labelText;
+
+                    optionLabel.appendChild(input);
+                    optionLabel.appendChild(text);
+                    seatsTakenOptionsEl.appendChild(optionLabel);
+                };
+
+                // Default option
+                addOption('all', 'All', shouldDefaultToAll);
+
+                // Seat-specific options
+                for (let i = 0; i < numSeats; i++) {
+                    const value = String(i);
+                    addOption(value, `Seat ${i + 1}`, !shouldDefaultToAll && prevSeatSet.has(i));
+                }
+
+                enforceSeatsTakenConstraints();
+            }
+
             function updateBankrollSetupUI() {
                 const container = document.getElementById('bankroll-inputs-container');
-                const numPlayers = parseInt(numPlayersInput.value, 10) || 1;
                 const isIndividual = document.getElementById('bankroll-individual').checked;
+                const takenSeatIndexes = getTakenSeatIndexes();
                 container.innerHTML = ''; // Clear previous inputs
 
                 if (isIndividual) {
-                    for (let i = 0; i < numPlayers; i++) {
+                    takenSeatIndexes.forEach((seatIndex) => {
                         const div = document.createElement('div');
                         div.className = 'setup-option';
                         div.innerHTML = `
-                            <label for="initial-bankroll-${i}">Player ${i + 1} Bankroll:</label>
-                            <input type="number" id="initial-bankroll-${i}" value="1000" min="1">
+                            <label for="initial-bankroll-${seatIndex}">Seat ${seatIndex + 1} Bankroll:</label>
+                            <input type="number" id="initial-bankroll-${seatIndex}" value="1000" min="1">
                         `;
                         container.appendChild(div);
-                    }
+                    });
                 } else {
                     const div = document.createElement('div');
                     div.className = 'setup-option';
                     div.innerHTML = `
-                        <label for="initial-bankroll">Initial Bankroll for All:</label>
+                        <label for="initial-bankroll">Initial Bankroll for Taken Seats:</label>
                         <input type="number" id="initial-bankroll" value="1000" min="1">
                     `;
                     container.appendChild(div);
                 }
             }
             
-            numPlayersInput.addEventListener('input', updateBankrollSetupUI);
+            function updateSetupScreenUI() {
+                updateSeatsTakenOptions();
+                updateBankrollSetupUI();
+            }
+
+            numPlayersInput.addEventListener('input', updateSetupScreenUI);
             bankrollTypeRadios.forEach(radio => radio.addEventListener('change', updateBankrollSetupUI));
-            updateBankrollSetupUI(); // Initial call to populate the form
+            seatsTakenOptionsEl.addEventListener('change', (e) => {
+                if (!(e.target && e.target.name === 'seats-taken')) return;
+
+                // If the user checks any specific seat, turn off "All" automatically.
+                // If the user checks "All", clear specific seats.
+                const allInput = document.querySelector('input[name="seats-taken"][value="all"]');
+                if (e.target.value !== 'all' && e.target.checked) {
+                    if (allInput) allInput.checked = false;
+                } else if (e.target.value === 'all' && e.target.checked) {
+                    // Clearing is handled by enforceSeatsTakenConstraints()
+                }
+
+                enforceSeatsTakenConstraints();
+                updateBankrollSetupUI();
+            });
+
+            updateSetupScreenUI(); // Initial call to populate the form
 
             startGameBtn.addEventListener('click', initializeGame);
             nextHandBtn.addEventListener('click', startNewHand);
@@ -1032,16 +1171,19 @@
                 
                 // Initialize players with correct bankrolls based on setup choice
                 const isIndividual = document.getElementById('bankroll-individual').checked;
-                players = Array.from({ length: numPlayers }, (_, i) => {
+                const takenSeatIndexes = new Set(getTakenSeatIndexes());
+                players = Array.from({ length: numPlayers }, (_, seatIndex) => {
+                    if (!takenSeatIndexes.has(seatIndex)) return null;
+
                     let bankroll;
                     if (isIndividual) {
-                        const inputEl = document.getElementById(`initial-bankroll-${i}`);
+                        const inputEl = document.getElementById(`initial-bankroll-${seatIndex}`);
                         bankroll = inputEl ? parseInt(inputEl.value, 10) : 1000;
                     } else {
                         const inputEl = document.getElementById('initial-bankroll');
                         bankroll = inputEl ? parseInt(inputEl.value, 10) : 1000;
                     }
-                    return new Player(`Player ${i + 1}`, bankroll || 1000);
+                    return new Player(`Player ${seatIndex + 1}`, bankroll || 1000);
                 });
 
                 dealer = new Player('Dealer');
