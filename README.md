@@ -1,3 +1,6 @@
+Enjoying our software? Please consider helping us with a donation.
+BTC address: bc1qgp6t9d9rfrfch0qhlzwsh6ppg9gaqtxpv3pvuz
+
 **Overview**
 
 This is a powerful, browser-based tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains the card count, and provides real-time, optimal strategy recommendations.
