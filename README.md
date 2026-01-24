@@ -3,11 +3,11 @@ BTC address: bc1qgp6t9d9rfrfch0qhlzwsh6ppg9gaqtxpv3pvuz
 
 **Overview**
 
-This is a powerful, browser-based tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains the card count, and provides real-time, optimal strategy recommendations.
+This is a powerful, browser-based AI tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains the card count, and provides real-time, optimal strategy recommendations.
 
 The tool combines perfect Basic Strategy with the Hi-Lo Card Counting system to give you the same edge a professional card counter would have..
 
-This entire application runs in a single HTML file and requires no installation or internet connection after loading.
+This entire application runs in a single HTML file and requires no installation or internet connection.
 
 **Key Features**
 
@@ -34,13 +34,13 @@ Zero Installation: Simply download the .html file and open it in any modern web 
 
 The main goal is to mirror a real card game in this application. You deal the cards physically, and then you input those same cards into the tool to receive strategic advice.
 
-Step 1: Download and Open
+**Step 1: Download and Open**
 
 Save the project's .html file to your computer.
 
 Open the file with a web browser like Chrome, Firefox, or Safari.
 
-Step 2: Game Setup
+**Step 2: Game Setup**
 
 You will be greeted with the "Game Setup" screen. Configure the options to match the rules of the game you intend to play:
 
@@ -56,7 +56,7 @@ Dealer on Soft 17: Select whether the dealer Stands (S17) or Hits (H17) on a sof
 
 Click Start Game when you are ready.
 
-Step 3: Placing Bets and The Deal
+**Step 3: Placing Bets and The Deal**
 
 The game screen will appear. At the start of a new hand, the application will display the AI Recommended Bet for each player in their respective card area on the left.
 
@@ -70,7 +70,7 @@ The application will update and prompt you for the next card (e.g., Deal dealer'
 
 Continue this process until all initial cards have been dealt.
 
-Step 4: Playing a Hand
+**Step 4: Playing a Hand**
 
 Once the deal is complete, the turn will move to the first player.
 
@@ -82,7 +82,7 @@ If the action results in a new card being dealt (like hitting or doubling), the 
 
 The application updates with the new hand value and provides the next recommendation. This cycle continues until you Stand or your hand is complete.
 
-Step 5: Handling Splits
+**Step 5: Handling Splits**
 
 If you split a pair, the player area will update to show two separate hands.
 
@@ -90,6 +90,6 @@ You can click on any of your active hands to select it. The selected hand will b
 
 All actions and dealt cards will be applied to the currently selected hand. This gives you the flexibility to play your split hands in any order, just like in a real casino.
 
-Step 6: Next Hand
+**Step 6: Next Hand**
 
 After all players and the dealer have finished their turns, the application will settle all bets and update bankrolls. Click the Start Next Hand button to begin the cycle again.
