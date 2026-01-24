@@ -177,6 +177,10 @@
             <label for="cut-card-penetration">Cut Card Penetration (%):</label>
             <input type="number" id="cut-card-penetration" min="50" max="95" value="75">
         </div>
+        <div class="setup-option">
+            <label for="sim-samples">AI Simulation Samples:</label>
+            <input type="number" id="sim-samples" min="200" max="10000" value="2000">
+        </div>
         <button id="start-game-btn">Start Game</button>
     </div>
 
@@ -385,9 +389,35 @@
         }
         
         // ========================================================================
-        // AI: EXACT EV DECISION ENGINE
+        // AI: STRATEGY (BASIC STRATEGY + HI-LO DEVIATIONS)
         // ========================================================================
         const H = 'HIT', S = 'STAND', D = 'DOUBLE', P = 'SPLIT', R = 'SURRENDER';
+        
+        const hardTotals = {
+        //   2  3  4  5  6  7  8  9  10 A
+            20: [S, S, S, S, S, S, S, S, S, S], 19: [S, S, S, S, S, S, S, S, S, S],
+            18: [S, S, S, S, S, S, S, S, S, S], 17: [S, S, S, S, S, S, S, S, S, S],
+            16: [S, S, S, S, S, H, H, R, R, R], 15: [S, S, S, S, S, H, H, H, R, H],
+            14: [S, S, S, S, S, H, H, H, H, H], 13: [S, S, S, S, S, H, H, H, H, H],
+            12: [H, H, S, S, S, H, H, H, H, H], 11: [D, D, D, D, D, D, D, D, D, D],
+            10: [D, D, D, D, D, D, D, D, H, H], 9:  [H, D, D, D, D, H, H, H, H, H],
+            8:  [H, H, H, H, H, H, H, H, H, H],
+        };
+        const softTotals = {
+        //   2  3  4  5  6  7  8  9  10 A
+            20: [S, S, S, S, S, S, S, S, S, S], 19: [S, S, S, S, D, S, S, S, S, S],
+            18: [D, D, D, D, D, S, S, H, H, H], 17: [H, D, D, D, D, H, H, H, H, H],
+            16: [H, H, D, D, D, H, H, H, H, H], 15: [H, H, D, D, D, H, H, H, H, H],
+            14: [H, H, H, D, D, H, H, H, H, H], 13: [H, H, H, D, D, H, H, H, H, H],
+        };
+        const pairs = {
+        //   2  3  4  5  6  7  8  9  10 A
+            'A': [P, P, P, P, P, P, P, P, P, P], '10':[S, S, S, S, S, S, S, S, S, S],
+            '9': [P, P, P, P, P, S, P, P, S, S], '8': [P, P, P, P, P, P, P, P, P, P],
+            '7': [P, P, P, P, P, P, H, H, H, H], '6': [P, P, P, P, P, H, H, H, H, H],
+            '5': [D, D, D, D, D, D, D, D, H, H], '4': [H, H, H, P, P, H, H, H, H, H],
+            '3': [P, P, P, P, P, P, H, H, H, H], '2': [P, P, P, P, P, P, H, H, H, H],
+        };
 
         function getTrueCountFromState(countState, shoe) {
             const decksRemaining = shoe.cardsRemaining / 52;
@@ -410,6 +440,82 @@
             const rank = hand.cards[0].rank;
             if (rank === 'A' && hand.isSplitAce && !rules.resplitAces) return false;
             return true;
+        }
+
+        function getStrategyMove(playerHand, dealerUpCard, trueCount, rules, currentHandCount) {
+            const playerValue = playerHand.getValue();
+            const dealerValue = dealerUpCard.value;
+
+            if (playerValue >= 21) return S;
+
+            // ==============================================================
+            // Illustrious 18 + Fab 4 Deviations
+            // ==============================================================
+            if (!playerHand.isPair() && playerValue === 16 && dealerValue === 10 && trueCount >= 0) return S;
+            if (playerValue === 15 && dealerValue === 10 && trueCount >= 4) return S;
+            if (playerValue === 12 && dealerValue === 3 && trueCount >= 2) return S;
+            if (playerValue === 12 && dealerValue === 2 && trueCount >= 3) return S;
+            if (!playerHand.isPair() && playerValue === 16 && dealerValue === 9 && trueCount >= 5) return S;
+            if (playerValue === 13 && dealerValue === 2 && trueCount <= -1) return S;
+            if (playerValue === 12 && dealerValue === 4 && trueCount <= 0) return S;
+            if (playerValue === 12 && dealerValue === 5 && trueCount <= -2) return S;
+            if (playerValue === 12 && dealerValue === 6 && trueCount <= -1) return S;
+            if (playerValue === 13 && dealerValue === 3 && trueCount <= -2) return S;
+            if (playerValue === 10 && dealerValue === 10 && trueCount >= 4) return D;
+            if (playerValue === 11 && dealerValue === 11 && trueCount >= 1) return D;
+            if (playerValue === 9 && dealerValue === 2 && trueCount >= 1) return D;
+            if (playerValue === 10 && dealerValue === 11 && trueCount >= 4) return D;
+            if (playerValue === 9 && dealerValue === 7 && trueCount >= 3) return D;
+            if (playerHand.isPair() && playerHand.cards[0].value === 10 && dealerValue === 5 && trueCount >= 5) return P;
+            if (playerHand.isPair() && playerHand.cards[0].value === 10 && dealerValue === 6 && trueCount >= 4) return P;
+            if (isSurrenderAllowed(playerHand, rules)) {
+                if (playerValue === 14 && dealerValue === 10 && trueCount >= 3) return R;
+                if (playerValue === 15 && dealerValue === 9 && trueCount >= 2) return R;
+                if (playerValue === 15 && dealerValue === 11 && trueCount >= 1) return R;
+            }
+            // ==============================================================
+            // End Deviations
+            // ==============================================================
+
+            const dealerIndex = dealerValue === 11 ? 9 : dealerValue - 2;
+            let move;
+
+            if (playerHand.isPair()) {
+                move = pairs[playerHand.cards[0].rank][dealerIndex];
+            } else if (playerHand.isSoft()) {
+                move = softTotals[playerValue] ? softTotals[playerValue][dealerIndex] : hardTotals[playerValue][dealerIndex];
+            } else {
+                if (playerValue <= 8) return H;
+                move = hardTotals[playerValue][dealerIndex];
+            }
+
+            if (move === D && !canDouble(playerHand, rules)) return H;
+            if (move === R && !isSurrenderAllowed(playerHand, rules)) return H;
+            if (move === P && !canSplitHand(playerHand, currentHandCount, rules)) return H;
+            return move;
+        }
+
+        function drawRandomRank(shoe) {
+            const total = shoe.cardsRemaining;
+            if (total <= 0) return null;
+            let pick = Math.random() * total;
+            for (const rank of RANKS) {
+                const count = shoe.counts[rank] || 0;
+                if (pick < count) {
+                    shoe.drawRank(rank);
+                    return rank;
+                }
+                pick -= count;
+            }
+            return null;
+        }
+
+        function drawCardForSimulation(shoe, countState) {
+            const rank = drawRandomRank(shoe);
+            if (!rank) return null;
+            countState.runningCount += getHiLoValue(rank);
+            countState.cardsSeen += 1;
+            return new Card('♠', rank);
         }
 
         function cloneHandForSimulation(hand) {
@@ -439,289 +545,203 @@
             return pDealerBJ > (1 / 3);
         }
 
-        // ========================================================================
-        // EXACT EV CALCULATOR (COMPOSITION-DEPENDENT, DETERMINISTIC)
-        // ========================================================================
-        function getRankValue(rank) {
-            if (['J', 'Q', 'K'].includes(rank)) return 10;
-            if (rank === 'A') return 11;
-            return parseInt(rank, 10);
-        }
-
-        function getRulesKey(rules) {
-            return [
-                rules.surrenderType,
-                rules.dealerHitsOnSoft17 ? 1 : 0,
-                rules.doubleAfterSplit ? 1 : 0,
-                rules.resplitAces ? 1 : 0,
-                rules.hitSplitAces ? 1 : 0,
-                rules.blackjackPayout,
-                rules.maxHands,
-            ].join('|');
-        }
-
-        function getShoeKey(shoe) {
-            return RANKS.map(rank => shoe.counts[rank] || 0).join(',');
-        }
-
-        function getHandKey(hand) {
-            const counts = RANKS.map(rank => hand.cards.filter(c => c.rank === rank).length);
-            return [
-                counts.join(','),
-                hand.cards.length,
-                hand.fromSplit ? 1 : 0,
-                hand.isSplitAce ? 1 : 0,
-                hand.splitDepth,
-            ].join('|');
-        }
-
-        function addRankToTotals(total, softAces, rank) {
-            let nextTotal = total + getRankValue(rank);
-            let nextSoftAces = softAces + (rank === 'A' ? 1 : 0);
-            while (nextTotal > 21 && nextSoftAces > 0) {
-                nextTotal -= 10;
-                nextSoftAces -= 1;
-            }
-            return { total: nextTotal, softAces: nextSoftAces };
-        }
-
-        function mergeProbMaps(target, source, weight) {
-            Object.keys(source).forEach(key => {
-                target[key] = (target[key] || 0) + source[key] * weight;
-            });
-        }
-
-        function getDealerOutcomeProbs(dealerUpCard, shoe, rules, dealerCache) {
-            function dealerProbs(total, softAces, cardsCount) {
-                const cacheKey = `${total}|${softAces}|${cardsCount}|${getShoeKey(shoe)}`;
-                if (dealerCache.has(cacheKey)) return dealerCache.get(cacheKey);
-
-                const result = {};
-                if (cardsCount === 2 && total === 21) {
-                    result.blackjack = 1;
-                    dealerCache.set(cacheKey, result);
-                    return result;
-                }
-                if (total > 21) {
-                    result.bust = 1;
-                    dealerCache.set(cacheKey, result);
-                    return result;
-                }
-
-                const isSoft = softAces > 0;
-                const shouldStand = total > 17 || (total === 17 && (!isSoft || !rules.dealerHitsOnSoft17));
-                if (shouldStand) {
-                    result[total] = 1;
-                    dealerCache.set(cacheKey, result);
-                    return result;
-                }
-
-                if (shoe.cardsRemaining <= 0) {
-                    result[total] = 1;
-                    dealerCache.set(cacheKey, result);
-                    return result;
-                }
-
-                const remaining = shoe.cardsRemaining;
-                RANKS.forEach(rank => {
-                    const count = shoe.counts[rank] || 0;
-                    if (count <= 0) return;
-                    const prob = count / remaining;
-                    shoe.drawRank(rank);
-                    const next = addRankToTotals(total, softAces, rank);
-                    const sub = dealerProbs(next.total, next.softAces, cardsCount + 1);
-                    mergeProbMaps(result, sub, prob);
-                    shoe.returnRank(rank);
-                });
-
-                dealerCache.set(cacheKey, result);
-                return result;
+        function simulateDealerHand(dealerUpCard, shoe, countState, rules) {
+            const dealerHand = new Hand();
+            dealerHand.addCard(new Card('♠', dealerUpCard.rank));
+            if (dealerHand.cards.length < 2) {
+                const holeCard = drawCardForSimulation(shoe, countState);
+                if (holeCard) dealerHand.addCard(holeCard);
             }
 
-            const upRank = dealerUpCard.rank;
-            const initial = addRankToTotals(0, 0, upRank);
-            return dealerProbs(initial.total, initial.softAces, 1);
-        }
-
-        function getStandEV(hand, dealerUpCard, shoe, rules, dealerCache) {
-            if (hand.isBust()) return -1;
-            const dealerProbs = getDealerOutcomeProbs(dealerUpCard, shoe, rules, dealerCache);
-            const pDealerBJ = dealerProbs.blackjack || 0;
-
-            if (hand.isBlackjack() && !hand.fromSplit) {
-                return (1 - pDealerBJ) * rules.blackjackPayout;
+            if (dealerHand.isBlackjack()) {
+                return dealerHand;
             }
 
-            let ev = 0;
-            Object.entries(dealerProbs).forEach(([outcome, prob]) => {
-                if (outcome === 'blackjack') {
-                    ev += -1 * prob;
-                    return;
+            while (true) {
+                const dealerValue = dealerHand.getValue();
+                const isSoft = dealerHand.isSoft();
+                if (dealerValue > 17 || (dealerValue === 17 && !isSoft) || (dealerValue === 17 && isSoft && !rules.dealerHitsOnSoft17)) {
+                    break;
                 }
-                if (outcome === 'bust') {
-                    ev += 1 * prob;
-                    return;
+                const nextCard = drawCardForSimulation(shoe, countState);
+                if (!nextCard) break;
+                dealerHand.addCard(nextCard);
+                if (dealerHand.isBust()) break;
+            }
+            return dealerHand;
+        }
+
+        function resolveHandPayout(hand, bet, dealerHand, rules) {
+            const dealerBlackjack = dealerHand.isBlackjack();
+            const dealerValue = dealerHand.isBust() ? 0 : dealerHand.getValue();
+            const playerValue = hand.isBust() ? 0 : hand.getValue();
+
+            if (hand.isBust()) return -bet;
+            if (hand.isBlackjack() && !hand.fromSplit && !dealerBlackjack) return bet * rules.blackjackPayout;
+            if (dealerBlackjack && !(hand.isBlackjack() && !hand.fromSplit)) return -bet;
+            if (dealerValue === 0) return bet;
+            if (playerValue > dealerValue) return bet;
+            if (playerValue < dealerValue) return -bet;
+            return 0;
+        }
+
+        function playHandWithPolicy(hand, bet, shoe, countState, rules, dealerUpCard, currentHandCount) {
+            while (true) {
+                if (hand.isBust() || hand.getValue() === 21) {
+                    return { hands: [{ hand, bet }], handCount: currentHandCount };
                 }
-                const dealerTotal = parseInt(outcome, 10);
-                const playerTotal = hand.getValue();
-                if (playerTotal > dealerTotal) ev += 1 * prob;
-                else if (playerTotal < dealerTotal) ev += -1 * prob;
-                else ev += 0;
-            });
-            return ev;
+                const trueCount = getTrueCountFromState(countState, shoe);
+                const move = getStrategyMove(hand, dealerUpCard, trueCount, rules, currentHandCount);
+
+                if (move === H) {
+                    const card = drawCardForSimulation(shoe, countState);
+                    if (!card) return { hands: [{ hand, bet }], handCount: currentHandCount };
+                    hand.addCard(card);
+                    continue;
+                }
+
+                if (move === D && canDouble(hand, rules)) {
+                    const card = drawCardForSimulation(shoe, countState);
+                    if (card) hand.addCard(card);
+                    return { hands: [{ hand, bet: bet * 2 }], handCount: currentHandCount };
+                }
+
+                if (move === P && canSplitHand(hand, currentHandCount, rules)) {
+                    const rank = hand.cards[0].rank;
+                    const splitDepth = hand.splitDepth + 1;
+
+                    const hand1 = new Hand();
+                    hand1.addCard(new Card('♠', rank));
+                    hand1.fromSplit = true;
+                    hand1.splitDepth = splitDepth;
+                    hand1.isSplitAce = rank === 'A';
+
+                    const hand2 = new Hand();
+                    hand2.addCard(new Card('♠', rank));
+                    hand2.fromSplit = true;
+                    hand2.splitDepth = splitDepth;
+                    hand2.isSplitAce = rank === 'A';
+
+                    currentHandCount += 1;
+
+                    const card1 = drawCardForSimulation(shoe, countState);
+                    const card2 = drawCardForSimulation(shoe, countState);
+                    if (card1) hand1.addCard(card1);
+                    if (card2) hand2.addCard(card2);
+
+                    const results = [];
+                    if (hand1.isSplitAce && !rules.hitSplitAces) {
+                        results.push({ hand: hand1, bet });
+                    } else {
+                        const res1 = playHandWithPolicy(hand1, bet, shoe, countState, rules, dealerUpCard, currentHandCount);
+                        results.push(...res1.hands);
+                        currentHandCount = res1.handCount;
+                    }
+                    if (hand2.isSplitAce && !rules.hitSplitAces) {
+                        results.push({ hand: hand2, bet });
+                    } else {
+                        const res2 = playHandWithPolicy(hand2, bet, shoe, countState, rules, dealerUpCard, currentHandCount);
+                        results.push(...res2.hands);
+                        currentHandCount = res2.handCount;
+                    }
+                    return { hands: results, handCount: currentHandCount };
+                }
+
+                return { hands: [{ hand, bet }], handCount: currentHandCount };
+            }
         }
 
-        function getOptimalEV(hand, dealerUpCard, shoe, rules, currentHandCount, caches) {
-            if (hand.isBust()) return -1;
-            if (hand.isSplitAce && !rules.hitSplitAces && hand.cards.length >= 2) {
-                return getStandEV(hand, dealerUpCard, shoe, rules, caches.dealerCache);
-            }
-            if (hand.getValue() >= 21) {
-                return getStandEV(hand, dealerUpCard, shoe, rules, caches.dealerCache);
-            }
-
-            const cacheKey = [
-                getHandKey(hand),
-                dealerUpCard.rank,
-                getShoeKey(shoe),
-                rules.cacheKey,
-                currentHandCount,
-            ].join('|');
-            if (caches.handEvCache.has(cacheKey)) return caches.handEvCache.get(cacheKey);
-
-            const legalMoves = [H, S];
-            if (canDouble(hand, rules)) legalMoves.push(D);
-            if (canSplitHand(hand, currentHandCount, rules)) legalMoves.push(P);
-            if (isSurrenderAllowed(hand, rules)) legalMoves.push(R);
-
-            let bestEV = -Infinity;
-            legalMoves.forEach(move => {
-                const ev = getActionEVExact(move, hand, dealerUpCard, shoe, rules, currentHandCount, caches);
-                if (ev > bestEV) bestEV = ev;
-            });
-
-            caches.handEvCache.set(cacheKey, bestEV);
-            return bestEV;
-        }
-
-        function getSplitEVExact(hand, dealerUpCard, shoe, rules, currentHandCount, caches) {
-            // Note: split EV treats each hand independently after the initial two cards.
-            const rank = hand.cards[0].rank;
-            const splitDepth = hand.splitDepth + 1;
-
-            const baseHand1 = new Hand();
-            baseHand1.addCard(new Card('♠', rank));
-            baseHand1.fromSplit = true;
-            baseHand1.splitDepth = splitDepth;
-            baseHand1.isSplitAce = rank === 'A';
-
-            const baseHand2 = new Hand();
-            baseHand2.addCard(new Card('♠', rank));
-            baseHand2.fromSplit = true;
-            baseHand2.splitDepth = splitDepth;
-            baseHand2.isSplitAce = rank === 'A';
-
-            let totalEV = 0;
-            if (shoe.cardsRemaining <= 1) return -1;
-
-            const remainingBefore = shoe.cardsRemaining;
-            RANKS.forEach(rank1 => {
-                const count1 = shoe.counts[rank1] || 0;
-                if (count1 <= 0) return;
-                const p1 = count1 / remainingBefore;
-                shoe.drawRank(rank1);
-
-                const hand1 = cloneHandForSimulation(baseHand1);
-                hand1.addCard(new Card('♠', rank1));
-
-                const remainingAfterFirst = shoe.cardsRemaining;
-                RANKS.forEach(rank2 => {
-                    const count2 = shoe.counts[rank2] || 0;
-                    if (count2 <= 0) return;
-                    const p2 = count2 / remainingAfterFirst;
-                    shoe.drawRank(rank2);
-
-                    const hand2 = cloneHandForSimulation(baseHand2);
-                    hand2.addCard(new Card('♠', rank2));
-
-                    const nextHandCount = currentHandCount + 1;
-                    const ev1 = getOptimalEV(hand1, dealerUpCard, shoe, rules, nextHandCount, caches);
-                    const ev2 = getOptimalEV(hand2, dealerUpCard, shoe, rules, nextHandCount, caches);
-                    totalEV += p1 * p2 * (ev1 + ev2);
-
-                    shoe.returnRank(rank2);
-                });
-
-                shoe.returnRank(rank1);
-            });
-
-            return totalEV;
-        }
-
-        function getActionEVExact(action, hand, dealerUpCard, shoe, rules, currentHandCount, caches) {
-            if (action === S) {
-                return getStandEV(hand, dealerUpCard, shoe, rules, caches.dealerCache);
-            }
+        function simulateActionEV(action, playerHand, dealerUpCard, shoe, counter, rules, samples, currentHandCount) {
             if (action === R) {
-                if (!isSurrenderAllowed(hand, rules)) return -Infinity;
+                if (!isSurrenderAllowed(playerHand, rules)) return -Infinity;
                 if (rules.surrenderType === 'early') return -0.5;
-                const dealerProbs = getDealerOutcomeProbs(dealerUpCard, shoe, rules, caches.dealerCache);
-                const pDealerBJ = dealerProbs.blackjack || 0;
+                const pDealerBJ = getDealerBlackjackProb(dealerUpCard, shoe);
                 return -(pDealerBJ * 1 + (1 - pDealerBJ) * 0.5);
             }
-            if (action === D) {
-                if (!canDouble(hand, rules)) return -Infinity;
-                let ev = 0;
-                const remaining = shoe.cardsRemaining;
-                if (remaining <= 0) return getStandEV(hand, dealerUpCard, shoe, rules, caches.dealerCache) * 2;
-                RANKS.forEach(rank => {
-                    const count = shoe.counts[rank] || 0;
-                    if (count <= 0) return;
-                    const prob = count / remaining;
-                    shoe.drawRank(rank);
-                    const newHand = cloneHandForSimulation(hand);
-                    newHand.addCard(new Card('♠', rank));
-                    ev += prob * (2 * getStandEV(newHand, dealerUpCard, shoe, rules, caches.dealerCache));
-                    shoe.returnRank(rank);
+
+            let total = 0;
+            const iterations = Math.max(200, samples || 2000);
+
+            for (let i = 0; i < iterations; i++) {
+                const simShoe = shoe.clone();
+                const countState = { runningCount: counter.runningCount, cardsSeen: counter.cardsSeen };
+                let handCount = currentHandCount;
+
+                const simHand = cloneHandForSimulation(playerHand);
+                let handsToResolve = [];
+
+                if (action === S) {
+                    handsToResolve = [{ hand: simHand, bet: 1 }];
+                } else if (action === H) {
+                    const card = drawCardForSimulation(simShoe, countState);
+                    if (card) simHand.addCard(card);
+                    const res = playHandWithPolicy(simHand, 1, simShoe, countState, rules, dealerUpCard, handCount);
+                    handsToResolve = res.hands;
+                    handCount = res.handCount;
+                } else if (action === D) {
+                    if (!canDouble(simHand, rules)) { total += -1; continue; }
+                    const card = drawCardForSimulation(simShoe, countState);
+                    if (card) simHand.addCard(card);
+                    handsToResolve = [{ hand: simHand, bet: 2 }];
+                } else if (action === P) {
+                    if (!canSplitHand(simHand, handCount, rules)) { total += -1; continue; }
+                    const rank = simHand.cards[0].rank;
+                    const splitDepth = simHand.splitDepth + 1;
+                    const hand1 = new Hand();
+                    hand1.addCard(new Card('♠', rank));
+                    hand1.fromSplit = true;
+                    hand1.splitDepth = splitDepth;
+                    hand1.isSplitAce = rank === 'A';
+                    const hand2 = new Hand();
+                    hand2.addCard(new Card('♠', rank));
+                    hand2.fromSplit = true;
+                    hand2.splitDepth = splitDepth;
+                    hand2.isSplitAce = rank === 'A';
+                    handCount += 1;
+
+                    const card1 = drawCardForSimulation(simShoe, countState);
+                    const card2 = drawCardForSimulation(simShoe, countState);
+                    if (card1) hand1.addCard(card1);
+                    if (card2) hand2.addCard(card2);
+
+                    const results = [];
+                    if (hand1.isSplitAce && !rules.hitSplitAces) {
+                        results.push({ hand: hand1, bet: 1 });
+                    } else {
+                        const res1 = playHandWithPolicy(hand1, 1, simShoe, countState, rules, dealerUpCard, handCount);
+                        results.push(...res1.hands);
+                        handCount = res1.handCount;
+                    }
+                    if (hand2.isSplitAce && !rules.hitSplitAces) {
+                        results.push({ hand: hand2, bet: 1 });
+                    } else {
+                        const res2 = playHandWithPolicy(hand2, 1, simShoe, countState, rules, dealerUpCard, handCount);
+                        results.push(...res2.hands);
+                        handCount = res2.handCount;
+                    }
+                    handsToResolve = results;
+                }
+
+                const dealerHand = simulateDealerHand(dealerUpCard, simShoe, countState, rules);
+                let roundProfit = 0;
+                handsToResolve.forEach(({ hand, bet }) => {
+                    roundProfit += resolveHandPayout(hand, bet, dealerHand, rules);
                 });
-                return ev;
-            }
-            if (action === P) {
-                if (!canSplitHand(hand, currentHandCount, rules)) return -Infinity;
-                return getSplitEVExact(hand, dealerUpCard, shoe, rules, currentHandCount, caches);
+                total += roundProfit;
             }
 
-            // HIT
-            let ev = 0;
-            const remaining = shoe.cardsRemaining;
-            if (remaining <= 0) return getStandEV(hand, dealerUpCard, shoe, rules, caches.dealerCache);
-            RANKS.forEach(rank => {
-                const count = shoe.counts[rank] || 0;
-                if (count <= 0) return;
-                const prob = count / remaining;
-                shoe.drawRank(rank);
-                const newHand = cloneHandForSimulation(hand);
-                newHand.addCard(new Card('♠', rank));
-                ev += prob * getOptimalEV(newHand, dealerUpCard, shoe, rules, currentHandCount, caches);
-                shoe.returnRank(rank);
-            });
-            return ev;
+            return total / iterations;
         }
 
-        function getRecommendedMoveExact(playerHand, dealerUpCard, gameRules, shoe, currentHandCount) {
+        function getRecommendedMove(playerHand, dealerUpCard, counter, gameRules, shoe, currentHandCount) {
             const legalMoves = [H, S];
             if (canDouble(playerHand, gameRules)) legalMoves.push(D);
             if (canSplitHand(playerHand, currentHandCount, gameRules)) legalMoves.push(P);
             if (isSurrenderAllowed(playerHand, gameRules)) legalMoves.push(R);
 
-            const caches = {
-                handEvCache: new Map(),
-                dealerCache: new Map(),
-            };
-
             const evs = {};
             legalMoves.forEach(move => {
-                evs[move] = getActionEVExact(move, playerHand, dealerUpCard, shoe, gameRules, currentHandCount, caches);
+                evs[move] = simulateActionEV(move, playerHand, dealerUpCard, shoe, counter, gameRules, gameRules.simSamples, currentHandCount);
             });
 
             let bestMove = legalMoves[0];
@@ -730,9 +750,6 @@
             });
 
             return { move: bestMove, evs };
-        }
-        function getRecommendedMove(playerHand, dealerUpCard, gameRules, shoe, currentHandCount) {
-            return getRecommendedMoveExact(playerHand, dealerUpCard, gameRules, shoe, currentHandCount);
         }
 
         function getBetAmount(counter, minBet, maxBet, bankroll) {
@@ -994,6 +1011,8 @@
                 const maxBetInput = document.getElementById('max-bet').value;
                 const maxBet = maxBetInput ? parseInt(maxBetInput, 10) : Infinity;
                 const cutCardPercent = parseInt(document.getElementById('cut-card-penetration').value, 10);
+                const simSamples = parseInt(document.getElementById('sim-samples').value, 10);
+                
                 gameRules = { 
                     minBet,
                     maxBet,
@@ -1004,9 +1023,9 @@
                     hitSplitAces: document.getElementById('hit-split-aces').checked,
                     blackjackPayout: parseFloat(document.getElementById('blackjack-payout').value),
                     cutCardPenetration: isNaN(cutCardPercent) ? 0.75 : Math.min(Math.max(cutCardPercent / 100, 0.5), 0.95),
+                    simSamples: isNaN(simSamples) ? 2000 : Math.min(Math.max(simSamples, 200), 10000),
                     maxHands: 4,
                 };
-                gameRules.cacheKey = getRulesKey(gameRules);
 
                 counter = new HiLoCounter(numDecks);
                 shoe = new Shoe(numDecks, gameRules.cutCardPenetration);
@@ -1224,7 +1243,7 @@
                     advanceTurn(); return;
                 }
 
-                const rec = getRecommendedMove(hand, dealer.hands[0].cards[0], gameRules, shoe, player.hands.length);
+                const rec = getRecommendedMove(hand, dealer.hands[0].cards[0], counter, gameRules, shoe, player.hands.length);
                 recommendationText.textContent = `AI recommends: ${rec.move}`;
                 const evSummary = Object.entries(rec.evs)
                     .map(([move, ev]) => `${move}: ${ev.toFixed(3)}`)
