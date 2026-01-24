@@ -3,9 +3,9 @@ BTC address: bc1qgp6t9d9rfrfch0qhlzwsh6ppg9gaqtxpv3pvuz
 
 **Overview**
 
-This is a powerful, browser-based AI tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains a full shoe state, and provides real-time, optimal strategy recommendations.
+This is a powerful, browser-based AI tool for Blackjack players. It acts as an interactive coach, allowing you to play a real-life game of Blackjack while it keeps track of the cards, maintains a full shoe state, and provides real-time, optimal EV (Excepected Value) recommendations.
 
-The tool combines Basic Strategy, Hi-Lo counting, and Monte Carlo EV simulation using the current shoe composition to recommend the highest-EV play for the exact game rules you selected.
+The tool uses an exact, composition-dependent EV calculator based on the current shoe state to recommend the highest-EV play for the exact game rules you selected.
 
 This entire application runs in a single HTML file and requires no installation or internet connection.
 
@@ -53,7 +53,7 @@ Initial Bankroll / Min & Max Bet: Set your session's financial parameters.
 
 Surrender Type: Choose None, Late, or Early surrender.
 
-Dealer on Soft 17: Select whether the dealer Stands (S17) or Hits (H17) on a soft 17. This is a critical rule that affects strategy.
+Dealer on Soft 17: Select whether the dealer Stands (S17) or Hits (H17) on a soft 17. This is a critical rule that affects EV.
 
 Double After Split (DAS): Toggle if doubling after a split is allowed.
 
@@ -62,8 +62,6 @@ Resplit Aces / Hit Split Aces: Configure split rules for aces.
 Blackjack Payout: Set 3:2 or 6:5 to match your table.
 
 Cut Card Penetration: Shuffle point as a percentage of the shoe.
-
-AI Simulation Samples: Controls Monte Carlo sample size (higher = more accurate, slower).
 
 Click Start Game when you are ready.
 
