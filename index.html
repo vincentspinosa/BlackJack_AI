@@ -1256,9 +1256,13 @@
 
             function handleCardPickerClick(rank) {
                 if (!shoe || !shoe.canDraw(rank)) return;
-                savePreviousState();
                 if (gameState === 'BETTING') {
+                    previousStateStack = [];
+                    cancelActionBtn.disabled = true;
+                    savePreviousState();
                     gameState = 'DEALING';
+                } else {
+                    savePreviousState();
                 }
 
                 const cardToDeal = new Card('♠', rank);
@@ -1337,7 +1341,6 @@
             }
 
             function startNewHand() {
-                savePreviousState();
                 gameState = 'BETTING';
                 nextHandBtn.style.display = 'none'; insurancePrompt.style.display = 'none';
                 if (shoe && shoe.shouldShuffle()) {
