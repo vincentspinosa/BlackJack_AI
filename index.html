@@ -477,8 +477,10 @@
             if (playerValue >= 21) return S;
 
             // ==============================================================
-            // Illustrious 18 + Fab 4 Deviations
+            // Hi-Lo Deviations (expanded set)
             // ==============================================================
+
+            // --- Hard totals: stand/hit deviations ---
             if (!playerHand.isPair() && playerValue === 16 && dealerValue === 10 && trueCount >= 0) return S;
             if (playerValue === 15 && dealerValue === 10 && trueCount >= 4) return S;
             if (playerValue === 12 && dealerValue === 3 && trueCount >= 2) return S;
@@ -489,17 +491,48 @@
             if (playerValue === 12 && dealerValue === 5 && trueCount <= -2) return S;
             if (playerValue === 12 && dealerValue === 6 && trueCount <= -1) return S;
             if (playerValue === 13 && dealerValue === 3 && trueCount <= -2) return S;
+            if (playerValue === 12 && dealerValue === 4 && trueCount >= 0) return S;
+            if (playerValue === 12 && dealerValue === 5 && trueCount >= -2) return S;
+            if (playerValue === 12 && dealerValue === 6 && trueCount >= -1) return S;
+            if (playerValue === 13 && dealerValue === 2 && trueCount >= -1) return S;
+            if (playerValue === 13 && dealerValue === 3 && trueCount >= -2) return S;
+
+            // --- Hard totals: double deviations ---
             if (playerValue === 10 && dealerValue === 10 && trueCount >= 4) return D;
             if (playerValue === 11 && dealerValue === 11 && trueCount >= 1) return D;
             if (playerValue === 9 && dealerValue === 2 && trueCount >= 1) return D;
             if (playerValue === 10 && dealerValue === 11 && trueCount >= 4) return D;
             if (playerValue === 9 && dealerValue === 7 && trueCount >= 3) return D;
+            if (playerValue === 8 && dealerValue === 6 && trueCount >= 1) return D;
+            if (playerValue === 9 && dealerValue === 3 && trueCount >= -1) return D;
+            if (playerValue === 10 && dealerValue === 9 && trueCount >= -2) return D;
+
+            // --- Pairs: split/stand deviations ---
             if (playerHand.isPair() && playerHand.cards[0].value === 10 && dealerValue === 5 && trueCount >= 5) return P;
             if (playerHand.isPair() && playerHand.cards[0].value === 10 && dealerValue === 6 && trueCount >= 4) return P;
+            if (playerHand.isPair() && playerHand.cards[0].rank === '9' && dealerValue === 7 && trueCount >= 3) return S;
+            if (playerHand.isPair() && playerHand.cards[0].rank === '9' && dealerValue === 11 && trueCount >= 3) return S;
+            if (playerHand.isPair() && playerHand.cards[0].rank === '8' && dealerValue === 10 && trueCount >= 7) return P;
+            if (playerHand.isPair() && playerHand.cards[0].rank === '4' && dealerValue === 4 && trueCount >= 4) return P;
+            if (playerHand.isPair() && playerHand.cards[0].rank === '2' && dealerValue === 2 && trueCount >= 3) return P;
+
+            // --- Soft totals: double deviations ---
+            if (playerHand.isSoft() && playerValue === 18 && dealerValue === 2 && trueCount >= 1) return D;
+            if (playerHand.isSoft() && playerValue === 18 && dealerValue === 3 && trueCount >= -1) return D;
+            if (playerHand.isSoft() && playerValue === 18 && dealerValue === 4 && trueCount >= -2) return D;
+            if (playerHand.isSoft() && playerValue === 18 && dealerValue === 5 && trueCount >= -2) return D;
+            if (playerHand.isSoft() && playerValue === 18 && dealerValue === 6 && trueCount >= -1) return D;
+            if (playerHand.isSoft() && playerValue === 19 && dealerValue === 6 && trueCount >= 1) return D;
+
+            // --- Late Surrender deviations (if allowed) ---
             if (isSurrenderAllowed(playerHand, rules)) {
                 if (playerValue === 14 && dealerValue === 10 && trueCount >= 3) return R;
                 if (playerValue === 15 && dealerValue === 9 && trueCount >= 2) return R;
                 if (playerValue === 15 && dealerValue === 11 && trueCount >= 1) return R;
+                if (playerValue === 16 && dealerValue === 9 && trueCount < 5) return R;
+                if (playerValue === 15 && dealerValue === 9 && trueCount < 2) return R;
+                if (playerValue === 15 && dealerValue === 11 && trueCount < 1) return R;
+                if (playerValue === 14 && dealerValue === 10 && trueCount < 3) return R;
             }
             // ==============================================================
             // End Deviations
