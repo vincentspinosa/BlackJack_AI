@@ -78,12 +78,10 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
 - **Insurance Decisions**
   - Insurance recommendation when dealer shows Ace
   - Probability-based calculation using remaining shoe composition
-  - Clear visual prompt with recommendation
 
 - **Bet Sizing**
   - True count-based bet recommendations
   - Stepped bet ramp (1-8 units)
-  - Bankroll percentage caps (max 25% per bet)
 
 ### Advanced Features
 
