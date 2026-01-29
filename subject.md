@@ -1,6 +1,7 @@
 The software has to be a Blackjack AI, which comes in the form of a solver that can be opened in a web browser, and with the following features:
 
 # Game Setup
+
 - **Player Configuration**
   - Number of player seats (1-7)
   - Seat selection (which seats are occupied)
