@@ -9,7 +9,6 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - Number of player seats (1-7)
   - Seat selection (which seats are occupied)
   - Individual or uniform bankroll settings
-  - Initial bankroll per player/seat
 
 - **Deck Configuration**
   - Number of decks (1-8)
@@ -41,17 +40,16 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
 - **Betting Phase**
   - AI-recommended bet sizing based on true count
   - Bet ramp: 1x, 2x, 4x, 6x, 8x units based on count
-  - Visual bet recommendations per player
 
 - **Player Actions**
   - Hit: Receive additional card
   - Stand: End turn with current hand
-  - Double Down: Double bet, receive one card
+  - Double: Double bet, receive one card
   - Split: Split pairs into two hands
   - Surrender: Forfeit half bet (if allowed)
 
 - **Hand Management**
-  - Multiple hands possible per player
+  - Multiple hands possible per player (when a player splits)
   - Hand selection and switching
   - Visual indication of active hand
   - Hand status tracking (active, stand, bust, blackjack, surrendered)
@@ -73,7 +71,7 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
 - **Card Counting**
   - Running count tracking
   - True count calculation (running count / decks remaining)
-  - Cards remaining in shoe
+  - Number of cards remaining in shoe
   - Penetration percentage display
   - Automatic count updates on card input
 
