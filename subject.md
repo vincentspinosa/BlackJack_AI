@@ -1,10 +1,6 @@
-# Expected Features
-
 The software has to be a Blackjack AI, which comes in the form of a solver that can be opened in a web browser, and with the following features:
 
-## Core Game Features
-
-### Game Setup
+# Game Setup
 - **Player Configuration**
   - Number of player seats (1-7)
   - Seat selection (which seats are occupied)
@@ -29,7 +25,7 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - Monte Carlo simulation, with Hi-lo card counting, Basic Strategy and Deviations
   - Balance between accuracy and performance
 
-### Gameplay Features
+# Gameplay Features
 
 - **Card Dealing**
   - Manual card input via clickable card picker
@@ -60,7 +56,7 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - Dealer blackjack detection
   - Bust detection
 
-### AI Features
+# AI Features
 
 - **Strategy Recommendations**
   - Optimal move recommendation (Hit/Stand/Double/Split/Surrender)
@@ -83,7 +79,7 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - True count-based bet recommendations
   - Stepped bet ramp (1-8 units)
 
-### Advanced Features
+# Advanced Features
 
 - **State Management**
   - Undo functionality, reinitialized each hand
