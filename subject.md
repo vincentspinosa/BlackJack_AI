@@ -27,7 +27,7 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - Maximum bet amount (optional, no limit)
 
 - **AI Configuration**
-  - Monte Carlo simulation sample size (200-10,000)
+  - Monte Carlo simulation, with Hi-lo card counting, Basic Strategy and Deviations
   - Balance between accuracy and performance
 
 ### Gameplay Features
@@ -41,7 +41,6 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
 - **Betting Phase**
   - AI-recommended bet sizing based on true count
   - Bet ramp: 1x, 2x, 4x, 6x, 8x units based on count
-  - Bankroll constraints and management
   - Visual bet recommendations per player
 
 - **Player Actions**
@@ -52,7 +51,7 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - Surrender: Forfeit half bet (if allowed)
 
 - **Hand Management**
-  - Multiple hands per player (up to 4 hands)
+  - Multiple hands possible per player
   - Hand selection and switching
   - Visual indication of active hand
   - Hand status tracking (active, stand, bust, blackjack, surrendered)
@@ -87,51 +86,15 @@ The software has to be a Blackjack AI, which comes in the form of a solver that 
   - True count-based bet recommendations
   - Stepped bet ramp (1-8 units)
   - Bankroll percentage caps (max 25% per bet)
-  - Minimum bet enforcement
 
 ### Advanced Features
 
 - **State Management**
-  - Undo functionality (cancel previous action)
-  - State snapshot system
-  - Action history tracking
+  - Undo functionality, reinitialized each hand
+  - History tracking
 
 - **Player Management**
-  - Add players mid-game (empty seats)
-  - Remove players (between hands)
-  - Bankroll updates during settlement phase
+  - Add players
+  - Remove players
+  - Automatic bankroll updates
   - Automatic player removal on bankroll depletion
-
-- **Game Flow**
-  - Hand-by-hand progression
-  - Settlement phase with payout calculation
-  - Next hand initialization
-  - Shuffle detection and automatic reset
-
-## User Interface Features
-
-### Layout
-- **Three-Column Grid Layout**
-  - Left column: Game info and player areas
-  - Center column: Dealer area, AI recommendations, user actions
-  - Right column: Card picker and controls
-
-### User Experience
-- **Clear Prompts**: Text instructions for each game phase
-- **Visual Feedback**: Hover effects, disabled states, active states
-- **Error Prevention**: Disabled buttons for invalid actions
-- **Information Display**: Running count, true count, cards remaining, penetration
-
-## Technical Features
-
-### Performance
-- **Efficient Simulation**: Optimized Monte Carlo algorithm
-- **Fast UI Updates**: Minimal DOM manipulation
-- **Memory Management**: Efficient state handling
-- **Smooth Interactions**: Responsive button clicks and card selection
-
-### Reliability
-- **Error Handling**: Graceful handling of edge cases
-- **State Validation**: Consistency checks throughout game flow
-- **Input Validation**: Sanitized user inputs
-- **Boundary Checks**: Prevents invalid game states
