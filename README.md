@@ -1,5 +1,5 @@
 Enjoying our software? Please consider supporting us with a donation.
-BTC address: bc1qgp6t9d9rfrfch0qhlzwsh6ppg9gaqtxpv3pvuz
+BTC address: bc1q2z30d8r4x67dmf3cwd3nmqcv7vkk7qpqtmnqsu
 
 **Overview**
 
